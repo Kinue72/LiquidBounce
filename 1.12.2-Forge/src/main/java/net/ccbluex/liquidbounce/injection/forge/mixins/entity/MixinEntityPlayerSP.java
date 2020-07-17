@@ -147,6 +147,11 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
 
     @Shadow
     protected abstract void updateAutoJump(float p_189810_1_, float p_189810_2_);
+    
+    @Shadow
+    private boolean prevOnGround;
+    @Shadow
+    private boolean autoJumpEnabled;
 
     /**
      * @author CCBlueX
@@ -215,9 +220,10 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
                         this.connection.sendPacket(new CPacketPlayer.Position(this.posX, this.getEntityBoundingBox().minY, this.posZ, this.onGround));
                     } else if (rotated) {
                         this.connection.sendPacket(new CPacketPlayer.Rotation(yaw, pitch, this.onGround));
-                    } else {
+                    } else if (this.prevOnGround != this.onGround) {
                         this.connection.sendPacket(new CPacketPlayer(this.onGround));
-                    }
+                }
+
                 } else {
                     this.connection.sendPacket(new CPacketPlayer.PositionRotation(this.motionX, -999.0D, this.motionZ, yaw, pitch, this.onGround));
                     moved = false;
@@ -237,7 +243,8 @@ public abstract class MixinEntityPlayerSP extends MixinAbstractClientPlayer {
                     this.lastReportedPitch = this.rotationPitch;
                 }
             }
-
+            this.prevOnGround = this.onGround;
+            this.autoJumpEnabled = this.mc.gameSettings.autoJump;
             LiquidBounce.eventManager.callEvent(new MotionEvent(EventState.POST));
         } catch (final Exception e) {
             e.printStackTrace();
